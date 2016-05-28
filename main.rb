@@ -43,7 +43,7 @@ rows.each { |r|
         data[year][party]['seats'] = seats
         data[year][party]['votePct'] = votePct
 
-        $stderr.puts "Found for #{year}, #{party}, #{seats} seats, #{votePct} % vote"
+        #$stderr.puts "Found for #{year}, #{party}, #{seats} seats, #{votePct} % vote"
     end
 
 }
@@ -55,15 +55,17 @@ rows.each { |r|
 ## Calculate seats for each party under PR
 ## Calculate difference
 
-data.each { |y|
+data.each_with_index { |yd,y|
     totalSeats = 0
-    y.each { |p|
-        totalSeats += p['seats']
+    data[y].each_with_index { |pd,p|
+        puts pd.class.name
+        puts p.class.name
+        totalSeats += pd['seats'].to_i
     }
 
-    y.each { |p|
-        p['seatsUnderPR'] = (totalSeats * p['votePct']/100).round
-        p['seatGain'] = p['seastsUnderPR'] - p['seats']
+    y.each_with_index { |pd,p|
+        pd['seatsUnderPR'] = (totalSeats * p['votePct']/100).round
+        pd['seatGain'] = p['seastsUnderPR'] - p['seats']
     }
 }
 
