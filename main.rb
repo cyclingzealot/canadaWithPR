@@ -2,11 +2,14 @@
 
 require 'nokogiri'
 require 'open-uri'
+require 'pp'
+require 'set'
 
 
 start = Time.now
 
-doc = Nokogiri::HTML(open("https://www.sfu.ca/~aheard/elections/1867-present.html"))
+url = "https://www.sfu.ca/~aheard/elections/1867-present.html"
+doc = Nokogiri::HTML(open(url))
 
 rows = doc.xpath('//*[@id="table6"]//tr')
 
@@ -32,19 +35,18 @@ rows.each { |r|
     firstCell = r.xpath("./#{cellElem}").first
     if firstCell.attr("bgcolor") == "#99ccff"
         year = /[0-9]{4}/.match(r.xpath("./#{cellElem}").first.text).to_s.to_i
-        data[year] = {}
+        data.merge!(year => {})
     elsif firstCell.attr("bgcolor").nil? && firstCell.attr("colspan").nil?
-        party = firstCell.text.strip
-        data[year][party] = {}
+        party = /[a-z\.éA-Z ]*/.match(firstCell.text.strip).to_s
 
         seats = r.xpath("./#{cellElem}")[1].text.strip.to_i
-        votePct = /[0-9]{2}.[0-9]/.match(r.xpath("./#{cellElem}")[3].text.strip).to_s.to_f
+        votePct = /[0-9]+.[0-9]/.match(r.xpath("./#{cellElem}")[3].text.strip).to_s.to_f
 
-        data[year][party]['seats'] = seats
-        data[year][party]['votePct'] = votePct
+        data[year].merge!({party.strip => {'seats' => seats, 'votePct' => votePct}})
 
         #$stderr.puts "Found for #{year}, #{party}, #{seats} seats, #{votePct} % vote"
     end
+
 
 }
 
@@ -55,19 +57,39 @@ rows.each { |r|
 ## Calculate seats for each party under PR
 ## Calculate difference
 
-data.each_with_index { |yd,y|
+partySet = SortedSet.new
+data.each { |y,yd|
     totalSeats = 0
-    data[y].each_with_index { |pd,p|
-        puts pd.class.name
-        puts p.class.name
+    yd.each { |p,pd|
         totalSeats += pd['seats'].to_i
     }
 
-    y.each_with_index { |pd,p|
-        pd['seatsUnderPR'] = (totalSeats * p['votePct']/100).round
-        pd['seatGain'] = p['seastsUnderPR'] - p['seats']
+    yd.each { |p,pd|
+        pd['seatsUnderPR'] = (totalSeats * pd['votePct']/100).round
+        pd['seatGain'] = pd['seatsUnderPR'] - pd['seats']
+        partySet.add(p.strip)
     }
 }
+
+printf "\t"
+partySet.each { |p|
+    printf "%s\t", p
+}
+printf "\n"
+
+
+data.each { |y,yd|
+    printf "%d\t", y
+    partySet.each { |p|
+        printf "%s\t", yd[p].nil? ? "" : yd[p]['seatGain']
+    }
+
+    printf "\n"
+
+}
+#pp partySet
+
+puts url
 
 done = Time.now
 
