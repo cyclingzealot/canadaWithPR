@@ -2,7 +2,6 @@
 
 require 'nokogiri'
 require 'open-uri'
-require 'byebug'
 
 
 start = Time.now
@@ -35,8 +34,7 @@ rows.each { |r|
         year = /[0-9]{4}/.match(r.xpath("./#{cellElem}").first.text).to_s.to_i
         data[year] = {}
     elsif firstCell.attr("bgcolor").nil? && firstCell.attr("colspan").nil?
-        debugger
-        party = firstCell.text.strip!
+        party = firstCell.text.strip
         data[year][party] = {}
 
         seats = r.xpath("./#{cellElem}")[1].text.strip.to_i
