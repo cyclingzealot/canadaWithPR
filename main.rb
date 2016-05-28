@@ -16,8 +16,14 @@ rows = doc.xpath('//*[@id="table6"]//tr')
 data = {}
 rowCount = 0
 year = 10000
+limit = 1945
+if ! ARGV[0].nil?
+    limit = ARGV[1].to_i
+end
+$stderr.puts "Limit set to #{limit}"
+
 rows.each { |r|
-    if year < 1945
+    if year < limit
         next
     end
 
