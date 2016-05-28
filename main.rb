@@ -40,14 +40,31 @@ rows.each { |r|
         seats = r.xpath("./#{cellElem}")[1].text.strip.to_i
         votePct = /[0-9]{2}.[0-9]/.match(r.xpath("./#{cellElem}")[3].text.strip).to_s.to_f
 
-        puts "Found for #{year}, #{party}, #{seats} seats, #{votePct} % vote"
+        data[year][party]['seats'] = seats
+        data[year][party]['votePct'] = votePct
+
+        $stderr.puts "Found for #{year}, #{party}, #{seats} seats, #{votePct} % vote"
     end
 
+}
 
+### Begin calculations here!!!!!!
 
+# For each year
+## Calculate the total number of seats
+## Calculate seats for each party under PR
+## Calculate difference
 
+data.each { |y|
+    totalSeats = 0
+    y.each { |p|
+        totalSeats += p['seats']
+    }
 
-
+    y.each { |p|
+        p['seatsUnderPR'] = (totalSeats * p['votePct']/100).round
+        p['seatGain'] = p['seastsUnderPR'] - p['seats']
+    }
 }
 
 done = Time.now
